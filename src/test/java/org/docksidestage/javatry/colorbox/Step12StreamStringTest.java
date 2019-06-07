@@ -16,8 +16,6 @@
 package org.docksidestage.javatry.colorbox;
 
 import java.io.File;
-import java.lang.reflect.Array;
-import java.security.KeyStore;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -25,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.docksidestage.bizfw.colorbox.ColorBox;
+import org.docksidestage.bizfw.colorbox.space.BoxSpace;
 import org.docksidestage.bizfw.colorbox.yours.YourPrivateRoom;
 import org.docksidestage.unit.PlainTestCase;
 
@@ -165,12 +164,13 @@ public class Step12StreamStringTest extends PlainTestCase {
         List<ColorBox> colorBoxList = new YourPrivateRoom().getColorBoxList();
         // colorBoxList = new ArrayList<>(); // 空だった場合の出力は分けるべき？
 
+        // 何も入っていないことを判定するために、SumResultクラスを作るとこもある
         int sum = colorBoxList.stream()
                 .flatMap(colorBox -> colorBox.getSpaceList()
                         .stream())
                 .map(boxSpace -> boxSpace.getContent())
                 .filter(content -> content instanceof String)
-                .mapToInt(var -> var.toString()
+                .mapToInt(content -> content.toString()
                         .length())
                 .sum();
 
@@ -188,7 +188,10 @@ public class Step12StreamStringTest extends PlainTestCase {
                         .getColorName())
                 .max(Comparator.comparingInt(String::length));
 
-        log(strMax.get());
+        strMax.ifPresentOrElse(
+                var -> log(var),
+                () -> log("not found")
+        );
     }
 
     // ===================================================================================
@@ -208,12 +211,34 @@ public class Step12StreamStringTest extends PlainTestCase {
                             .stream()
                             .map(boxSpace -> boxSpace.getContent())
                             .filter(content -> content instanceof String)
-                            .map(var -> var.toString())
-                            .filter(var -> var.startsWith(targetStr))
+                            .map(content -> content.toString())
+                            .filter(content -> content.startsWith(targetStr))
                             .collect(Collectors.toList());
 
                     return !collect.isEmpty();
                 })
+                .map(colorBox -> colorBox.getColor()
+                        .getColorName())
+                .collect(Collectors.toList());
+
+        log(ansList);
+
+    }
+
+    public void test_startsWith_findFirstWordSub() {
+        String targetStr = "Water";
+        List<ColorBox> colorBoxList = new YourPrivateRoom().getColorBoxList();
+
+        List<String> ansList = colorBoxList.stream()
+                .filter(colorBox -> {
+                    return colorBox.getSpaceList()
+                            .stream()
+                            .map(boxSpace -> boxSpace.getContent())
+                            .filter(content -> content instanceof String)
+                            .map(content -> content.toString())
+                            .anyMatch(content -> content.startsWith(targetStr));
+                })
+                .peek(var -> log(var.getSpaceList()))
                 .map(colorBox -> colorBox.getColor()
                         .getColorName())
                 .collect(Collectors.toList());
@@ -231,16 +256,14 @@ public class Step12StreamStringTest extends PlainTestCase {
 
         List<String> ansList = colorBoxList.stream()
                 .filter(colorBox -> {
-                    List<String> collect = colorBox.getSpaceList()
+                    return colorBox.getSpaceList()
                             .stream()
                             .map(boxSpace -> boxSpace.getContent())
                             .filter(content -> content instanceof String)
                             .map(var -> var.toString())
-                            .filter(var -> var.endsWith(targetStr))
-                            .collect(Collectors.toList());
-
-                    return !collect.isEmpty();
+                            .anyMatch(var -> var.endsWith(targetStr));
                 })
+                .peek(var -> log(var.getSpaceList()))
                 .map(colorBox -> colorBox.getColor()
                         .getColorName())
                 .collect(Collectors.toList());
@@ -258,19 +281,15 @@ public class Step12StreamStringTest extends PlainTestCase {
         String targetStr = "front";
         List<ColorBox> colorBoxList = new YourPrivateRoom().getColorBoxList();
 
-        List<String> targetStrList = colorBoxList.stream()
+        colorBoxList.stream()
                 .flatMap(colorBox -> colorBox.getSpaceList()
                         .stream())
                 .map(boxSpace -> boxSpace.getContent())
                 .filter(content -> content instanceof String)
-                .map(var -> var.toString())
-                .filter(var -> var.endsWith(targetStr))
-                .collect(Collectors.toList());
-
-        for (String str : targetStrList) {
-            log(str);
-            log(str.indexOf(targetStr) + 1);
-        }
+                .map(content -> content.toString())
+                .filter(strContent -> strContent.endsWith(targetStr))
+                .peek(strContent -> log(strContent))
+                .forEach(strContent -> log(strContent.indexOf(targetStr) + 1));
     }
 
     /**
@@ -296,22 +315,6 @@ public class Step12StreamStringTest extends PlainTestCase {
                 .forEach(var -> {
                     log("{} : {}", var.lastIndexOf(targetStr) + 1, var);
                 });
-
-        colorBoxList.forEach(new Consumer<ColorBox>() {
-            @Override
-            public void accept(ColorBox var) {
-                log(var);
-            }
-        });
-
-        colorBoxList.stream()
-                .filter(new Predicate<ColorBox>() {
-                    @Override
-                    public boolean test(ColorBox colorBox) {
-                        return colorBox instanceof YourPrivateRoom.DevilBox;
-                    }
-                });
-
     }
 
     // ===================================================================================
@@ -458,17 +461,21 @@ public class Step12StreamStringTest extends PlainTestCase {
                 .filter(content -> content instanceof Map)
                 .peek(map -> log(((Map) map).toString()))
                 .map(contentMap -> {
-                    return ((Map) contentMap).keySet().stream()
-                            .reduce(new StringBuilder("map:{"), (sb, key) -> {
-                                return ((StringBuilder) sb).append("\"")
-                                        .append(key)
-                                        .append("\"=")
-                                        .append(((Map) contentMap).get(key))
-                                        .append("; ");
-                            });
+                    return getReduce((Map) contentMap);
                 })
                 .forEach(var -> log(((StringBuilder)var).append("}"))); // TODO: 2019-05-30 ydoi ここが汚い。。
 
+    }
+
+    private Object getReduce(Map contentMap) {
+        return contentMap.keySet().stream()
+                .reduce(new StringBuilder("map:{"), (sb, key) -> {
+                    return ((StringBuilder) sb).append("\"")
+                            .append(key)
+                            .append("\"=")
+                            .append(contentMap.get(key))
+                            .append("; ");
+                });
     }
 
     /**
@@ -476,7 +483,43 @@ public class Step12StreamStringTest extends PlainTestCase {
      * (カラーボックスの中に入っている java.util.Map を "map:{ key = value ; key = map:{ key = value ; ... } ; ... }" という形式で表示すると？)
      */
     public void test_showMap_nested() {
+        List<ColorBox> colorBoxList = new YourPrivateRoom().getColorBoxList();
+
+        colorBoxList.stream()
+                .flatMap(colorBox -> colorBox.getSpaceList().stream())
+                .map(boxSpace -> boxSpace.getContent())
+                .filter(content -> content instanceof Map)
+                .map(contentMap -> convertStrFromMap(((Map) contentMap)))
+                .forEach(contentStr -> log(contentStr));
     }
+
+    private String convertStrFromMap(java.util.Map map){
+        StringBuilder show_map = new StringBuilder("map:{ ");
+
+        boolean multiple_flag = false;
+        for (Object key : map.keySet()) {
+            if (multiple_flag) show_map.append(" ; "); // 最後の、セミコロンは入れない
+
+            Object value = map.get(key);
+            String valueStr;
+            if (value instanceof Map) {
+                Map valueMap = (Map) value;
+                valueStr = convertStrFromMap(valueMap);
+            }else{
+                valueStr = value.toString();
+            }
+            show_map.append(key.toString()).append(" = ").append(valueStr);
+            multiple_flag = true;
+        }
+        return show_map.append(" }").toString();
+    }
+
+
+
+
+
+
+
 
     // ===================================================================================
     //                                                                           Good Luck
@@ -515,4 +558,70 @@ public class Step12StreamStringTest extends PlainTestCase {
             log(e);
         }
     }
+    public void test_optional() {
+        List<ColorBox> colorBoxList = new YourPrivateRoom().getColorBoxList();
+
+        Optional<ColorBox> optBox = colorBoxList.stream().findFirst();
+        Optional<BoxSpace> boxSpace = optBox.flatMap(colorBox -> colorBox.getSpaceList()
+                .stream()
+                .findFirst());
+
+        String logData = boxSpace.map(var -> var.getContent()
+                .toString())
+                .orElseGet(() -> {
+                    return "not found";
+                });
+
+        log(logData);
+    }
+
+    class Member{
+        private int id;
+        private String name;
+
+        public String getName() {
+            return name;
+        }
+
+        public Member(int id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+    }
+
+    public void test_member() {
+
+        Optional<Member> optMember1 = Optional.of(new Member(1, null));
+        Optional<Member> optMember2 = Optional.empty();
+
+        List<Optional<Member>> memberList = Arrays.asList(optMember1, optMember2);
+
+        for (Optional<Member> member : memberList) {
+            log(optMember1.map(Member::getName)
+                    .orElse("not found"));
+        }
+    }
+
+    public void test_memberNotStrem() {
+
+        Member member1 = new Member(1, null);
+        Member member2 = null;
+
+        List<Member> memberList = Arrays.asList(member1, member2);
+
+        for (Member member : memberList) {
+            log(getMemberName(member));
+        }
+    }
+
+    private String getMemberName(Member member) {
+        if (member != null){
+            if (member.getName() != null) {
+                return member.getName();
+            }
+        }
+        return "not found";
+    }
+
 }
