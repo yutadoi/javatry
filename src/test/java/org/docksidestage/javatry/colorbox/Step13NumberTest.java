@@ -15,13 +15,18 @@
  */
 package org.docksidestage.javatry.colorbox;
 
+import java.util.List;
+import java.util.stream.Stream;
+
+import org.docksidestage.bizfw.colorbox.ColorBox;
+import org.docksidestage.bizfw.colorbox.yours.YourPrivateRoom;
 import org.docksidestage.unit.PlainTestCase;
 
 /**
  * The test of Number with color-box. <br>
  * Show answer by log() for question of javadoc.
  * @author jflute
- * @author your_name_here
+ * @author yuta.doi
  */
 public class Step13NumberTest extends PlainTestCase {
 
@@ -40,6 +45,33 @@ public class Step13NumberTest extends PlainTestCase {
      * (カラーボックの中に入っている数値で、0から54までの値は何個ある？)
      */
     public void test_countZeroToFiftyFour_Number() {
+        List<ColorBox> colorBoxList = new YourPrivateRoom().getColorBoxList();
+
+//        colorBoxList.stream()
+//                .flatMap(colorBox -> colorBox.getSpaceList().stream())
+//                .map(boxSpace -> boxSpace.getContent())
+//                .filter(content -> content instanceof List)
+//                .flatMap(content -> ((List<Object>) content).stream())
+//                .map(content -> content.toString())
+//                .forEach(content -> log(content));
+
+
+        colorBoxList.stream()
+                .flatMap(colorBox -> colorBox.getSpaceList().stream())
+                .map(boxSpace -> boxSpace.getContent())
+                .flatMap(content -> {
+                    if(content instanceof List) {
+                        return ((List<Object>) content).stream();
+                    }
+                    return Stream.of(content);
+                })
+//                .map(content -> ((Integer) content))
+//                .filter(contentInt -> contentInt >= 0 && contentInt <= 54)
+                .forEach(foundContentInt -> {
+                    log(foundContentInt);
+                });
+
+        // TODO yuta.doi ここで今日の作業終了:エラーは吐いてないけど、例外みたいなものが出てる... (2019-06-13)
     }
 
     /**
@@ -54,6 +86,7 @@ public class Step13NumberTest extends PlainTestCase {
      * (カラーボックスの中に入ってる List の中の BigDecimal を全て足し合わせると？)
      */
     public void test_sumBigDecimalInList() {
+        // TODO yuta.doi パブリックレビュー対象 (2019-06-13)
     }
 
     // ===================================================================================
@@ -72,4 +105,7 @@ public class Step13NumberTest extends PlainTestCase {
      */
     public void test_sumMapNumberValue() {
     }
+
+
+
 }

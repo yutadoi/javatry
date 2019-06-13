@@ -144,7 +144,7 @@ public class Step11ClassicStringTest extends PlainTestCase {
 
     private List<String> get_content_string_list() {
         List<String> str_list = new ArrayList<>();
-        List<Object> content_list = get_content_list();
+        List<Object> content_list = getContentList();
 
         for (Object content : content_list) {
             if (content != null) {
@@ -306,7 +306,7 @@ public class Step11ClassicStringTest extends PlainTestCase {
 
     private String get_str_endWith(String end_str) {
 
-        List<Object> content_list = get_content_list();
+        List<Object> content_list = getContentList();
         for (Object content : content_list) {
             if (content instanceof String) {
                 String contentStr = (String) content;
@@ -324,7 +324,7 @@ public class Step11ClassicStringTest extends PlainTestCase {
      */
     public void test_lastIndexOf_findIndex() {
         String search_target = "ど";
-        List<Object> content_list = get_content_list();
+        List<Object> content_list = getContentList();
         for (Object content : content_list) {
             if (content instanceof String){
                 int start_point_target_str = ((String) content).indexOf(search_target);
@@ -381,7 +381,7 @@ public class Step11ClassicStringTest extends PlainTestCase {
     }
 
     private String get_str_startWith(String start_str) {
-        List<Object> content_list = get_content_list();
+        List<Object> content_list = getContentList();
         for (Object content : content_list) {
             if (content instanceof String) {
                 String contentStr = (String) content;
@@ -454,7 +454,7 @@ public class Step11ClassicStringTest extends PlainTestCase {
      * (カラーボックスの中に入っているDevilBoxクラスのtextの長さの合計は？)
      */
     public void test_welcomeToDevil() {
-        List<Object> content_list = get_content_list();
+        List<Object> content_list = getContentList();
         List<YourPrivateRoom.DevilBox> devilBoxes = new ArrayList<>();
         for (Object content : content_list) {
             if (content instanceof YourPrivateRoom.DevilBox) {
@@ -494,7 +494,7 @@ public class Step11ClassicStringTest extends PlainTestCase {
      * (カラーボックスの中に入っている java.util.Map を "map:{ key = value ; key = value ; ... }" という形式で表示すると？)
      */
     public void test_showMap_flat() {
-        List<Map> mapContent_list = get_mapContent_list();
+        List<Map> mapContent_list = getMapContentList();
 
         for (Map map : mapContent_list) {
             StringBuilder show_map = new StringBuilder("map:{ ");
@@ -511,32 +511,34 @@ public class Step11ClassicStringTest extends PlainTestCase {
      * (カラーボックスの中に入っている java.util.Map を "map:{ key = value ; key = map:{ key = value ; ... } ; ... }" という形式で表示すると？)
      */
     public void test_showMap_nested() {
-        List<Map> mapContent_list = get_mapContent_list();
+        List<Map> mapContentList = getMapContentList();
 
-        for (Map map : mapContent_list) {
-            log(convert_to_str_from_map(map));
+        for (Map map : mapContentList) {
+            log(toStringForNestMap(map));
         }
     }
 
-    private String convert_to_str_from_map(java.util.Map map){
-        StringBuilder show_map = new StringBuilder("map:{ ");
+    // This method is "Recursion method".
+    private String toStringForNestMap(java.util.Map map){
+        StringBuilder stringBuilderForMap = new StringBuilder("map:{ ");
 
-        boolean multiple_flag = false;
-        for (Object key : map.keySet()) {
-            if (multiple_flag) show_map.append(" ; "); // 最後の、セミコロンは入れない
+        boolean isFinish = false;
+        for (Object key : map.entrySet()) {
+            if (isFinish) stringBuilderForMap.append(" ; "); // 最後の、セミコロンは入れない
 
             Object value = map.get(key);
             String valueStr;
             if (value instanceof Map) {
                 Map valueMap = (Map) value;
-                valueStr = convert_to_str_from_map(valueMap);
+                valueStr = toStringForNestMap(valueMap);
             }else{
                 valueStr = value.toString();
             }
-            show_map.append(key.toString()).append(" = ").append(valueStr);
-            multiple_flag = true;
+
+            stringBuilderForMap.append(key.toString()).append(" = ").append(valueStr);
+            isFinish = true;
         }
-        return show_map.append(" }").toString();
+        return stringBuilderForMap.append(" }").toString();
     }
 
     // ===================================================================================
@@ -606,9 +608,9 @@ public class Step11ClassicStringTest extends PlainTestCase {
 
 
     public void test_map_converter() {
-        List<Map> mapContent_list = get_mapContent_list();
+        List<Map> mapContent_list = getMapContentList();
         for (Map map : mapContent_list) {
-            String mapStr = convert_to_str_from_map(map);
+            String mapStr = toStringForNestMap(map);
             Map mapRe = convert_to_map_from_text(mapStr);
             log(map.toString());
             log(compare_map(map, mapRe));
@@ -724,7 +726,7 @@ public class Step11ClassicStringTest extends PlainTestCase {
         log("[ans] -> " + ans_text);
     }
 
-    private List<Object> get_content_list() {
+    private List<Object> getContentList() {
         List<Object> contentList = new ArrayList<>();
         List<ColorBox> colorBoxList = new YourPrivateRoom().getColorBoxList();
         for (ColorBox colorBox : colorBoxList) {
@@ -742,7 +744,7 @@ public class Step11ClassicStringTest extends PlainTestCase {
     }
 
     private List<String> get_strContent_list(){
-        List<Object> content_list = get_content_list();
+        List<Object> content_list = getContentList();
         List<String> new_content_list = new ArrayList<>();
         for (Object content : content_list) {
             if (content instanceof String){
@@ -754,7 +756,7 @@ public class Step11ClassicStringTest extends PlainTestCase {
     }
 
     private List<java.io.File> get_fileContent_list(){
-        List<Object> content_list = get_content_list();
+        List<Object> content_list = getContentList();
         List<java.io.File> new_content_list = new ArrayList<>();
         for (Object content : content_list) {
             if (content instanceof java.io.File){
@@ -765,15 +767,15 @@ public class Step11ClassicStringTest extends PlainTestCase {
         return new_content_list;
     }
 
-    private List<java.util.Map> get_mapContent_list(){
-        List<Object> content_list = get_content_list();
-        List<java.util.Map> new_content_list = new ArrayList<>();
-        for (Object content : content_list) {
+    private List<java.util.Map> getMapContentList(){
+        List<Object> contentList = getContentList();
+        List<java.util.Map> mapContentList = new ArrayList<>();
+        for (Object content : contentList) {
             if (content instanceof java.util.Map){
                 java.util.Map contentStr = (java.util.Map) content;
-                new_content_list.add(contentStr);
+                mapContentList.add(contentStr);
             }
         }
-        return new_content_list;
+        return mapContentList;
     }
 }
